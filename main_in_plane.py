@@ -19,12 +19,6 @@ class auxetic_cell:
         self.bottom_layer_angle = 45                              # [radians]
         self.arm_angle = 2*(np.pi)/(float(self.arms)) # [radians]
         self.arm_positions = []
-    def connect(self):
-        # connects a cell to another cell
-        print('not ready')
-    def update_arm_positions(self):
-        # rewrites arm positions based on connections
-        print('not ready')
     def get_position_list(self):
         cell_positions = []
         cell_center = [self.center_x, self.center_y]
@@ -40,7 +34,22 @@ class auxetic_cell:
             cell_j_position = [self.arm_length * np.sin(j * self.arm_angle + self.bottom_layer_angle),
                                self.arm_length * np.cos(j * self.arm_angle + self.bottom_layer_angle)]
             cell_positions.append(cell_j_position)
+        # return list of size = 1 (center) + arm ends (layers*arms)
         return cell_positions
+    def update_arm_positions(self):
+        # rewrites arm positions based on connections
+        print('not ready')
+    def connect(self, other_cell_):
+        # connects a cell arm to another cell arm
+        print('not ready')
+
+
+class abstract_auxetic_cell:
+    # point representation of auxetic cell
+    def __init__(self, x, y):
+        self.position_x = x
+        self.position_y = y
+
 
 
 def get_relu(a, b):
@@ -62,18 +71,80 @@ def plot_auxetic_cell(list_of_cell_positions):
     plt.close()
 
 
+def scissor_position(length, angle, number_of_links):
+    """
+    Calculate the positions of the scissor mechanism with backlash
+    """
+    # ReLU strength
+    a = 0.1
+
+    x_positions = [0]
+    y_positions = [0]
+
+    for i in range(number_of_links):
+        # Calculate position of the next hinge based on current hinge
+        x_next = x_positions[-1] + length * np.sin(angle)
+        y_next = y_positions[-1] + length * np.cos(angle)
+
+        x_positions.append(x_next)
+        y_positions.append(y_next)
+
+        # Reverse the direction of the angle for the next linkage
+        angle = -angle
+
+        x_next = x_positions[-1] + length * np.sin(angle)
+        y_next = y_positions[-1] + length * np.cos(angle)
+
+        x_positions.append(x_next)
+        y_positions.append(y_next)
+
+        # Apply decrement to neutral pi/4 angle with ReLU relationship
+        angle = (angle - a*(angle - 0.785))
+        print(angle)
+    print(x_positions)
+    print(y_positions)
+    return x_positions, y_positions
+
+
+def plot_scissor_mechanism(xs, ys, number_of_series):
+    plt.figure(figsize=(10, 6))
+    for i in range(number_of_series):
+        plt.plot(xs, ys, '-o')
+
+    plt.title("Scissor Mechanisms in Series")
+    plt.xlabel("Distance in X (cm)")
+    plt.ylabel("Distance in Y (cm)")
+    plt.xlim([-2, 2])
+    plt.ylim([0, 60])
+
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
+
+
+
 if __name__ == '__main__':
-    cell1 = auxetic_cell(x=0, y=0)
-    cell1_positions = cell1.get_position_list()
+    # Parameters for the scissor mechanism
+    LENGTH = 2.0  # Length of each linkage
+    ANGLE = np.pi / 4  # Angle between the links
+    NUMBER_OF_SERIES = 5  # Number of scissor mechanisms in series
+    xs, ys = scissor_position(LENGTH, ANGLE, number_of_links=16)
 
-    plot_auxetic_cell(list_of_cell_positions=cell1_positions)
+    plot_scissor_mechanism(xs, ys, NUMBER_OF_SERIES)
 
-    # Set fixed variable of the structures shape
-    link_length = 2 # [cm]
-
-    ReLU_example = get_relu(1, 1)
-    ReLU_example(5)
-
-    a11 = lambda x, y: get_relu(1, 0.564)(x)
-    print(list(takewhile(lambda x: x > 0, accumulate(range(10, 2000), a11))))
-    target = [0.6]
+    # cell1 = auxetic_cell(x=0, y=0)
+    # cell1_positions = cell1.get_position_list()
+    #
+    # plot_auxetic_cell(list_of_cell_positions=cell1_positions)
+    #
+    # # Set fixed variable of the structures shape
+    # link_length = 2 # [cm]
+    #
+    # ReLU_example = get_relu(1, 1)
+    # ReLU_example(5)
+    #
+    # a11 = lambda x, y: get_relu(1, 0.564)(x)
+    # print(list(takewhile(lambda x: x > 0, accumulate(range(10, 2000), a11))))
+    # target = [0.6]
